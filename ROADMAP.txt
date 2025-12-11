@@ -1,0 +1,31 @@
+# SkyAI Ultimate Terminál: Fejlesztési Ütemterv (Roadmap)
+
+## 🟢 FÁZIS I: CORE LAUNCH (JELENLEGI ÁLLAPOT)
+- Cél: Stabil, multichain alapok és fő bevételi források aktiválása.
+- Állapot: ÉLES 🚀
+
+- 1.1. Multichain Kapcsolat: BNB Chain (EVM) & Solana natív integráció. 🔗
+- 1.2. Sniper Bot: AI-vezérelt, alacsony késleltetésű kereskedési stratégia elindítása. 🎯
+- 1.3. Whale Vault: Intézményi hozamgeneráló stratégiák aktiválása. 👑
+- 1.4. 10 DeFi Protokoll: Bevételtermelő okosszerződések futtatása (NFT, Staking, Pre-Sale). 💰
+- 1.5. Dashboard: Alapvető portfólió követés és piaci hangulat elemzés. 📊
+- 1.6. Technológia: Ethers.js és Solana Web3.js tranzakciós backend. ⚙️
+
+## 🟡 FÁZIS II: FUNKCIONALITÁS MÉLYÍTÉSE & KÖZÖSSÉG (Rövid Távú Célok)
+- Cél: A terminál professzionális eszköztárának bővítése, felhasználói bázis növelése.
+- Tervezett: Q1-Q2 2026
+
+- 2.1. Gemini AI Integráció: Részletes, 100 db-os mélyelemzés AI Elemző Kreditért. 🧠
+- 2.2. Fejlett Kockázatkezelés: Trade Insurance (Biztosítás likvidálások ellen, SAFU Fund). 🛡️
+- 2.3. Whale Club Launch: Exkluzív, zárt közösség (Private Sale, belsős infók). 👥
+- 2.4. $SKY Token Listing: Token nyilvános listázása DEX/CEX platformon. 📈
+- 2.5. Priority Pass Hálózat: Gyors sáv (Fast Lane) bevezetése a tranzakciókhoz. 💳
+
+## 🟣 FÁZIS III: ÖKOSZISZTÉMA ÉPÍTÉS (Hosszú Távú Vízió)
+- Cél: A SkyAI globális Web3 ökoszisztémává fejlesztése, decentralizált irányítással.
+- Tervezett: Hosszú táv
+
+- 3.1. DAO: Decentralizált Irányítás a $SKY Token birtokosainak. 🗳️
+- 3.2. Multichain Terjeszkedés: Ethereum és főbb Layer 2 hálózatok (pl. Polygon) integrálása. ⛓️
+- 3.3. NFT Utility 2.0: A Founder NFT új passzív jövedelmező funkciókkal való bővítése. 🖼️
+- 3.4. Új Bot Stratégiák: Decentralizált (DEX) arbitrage botok bevezetése. 🤖
