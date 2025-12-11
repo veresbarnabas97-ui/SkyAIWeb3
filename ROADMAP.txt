@@ -77,4 +77,4 @@ A terminál egy HTML/JS/CSS alapú webes felület, mely közvetlenül kommuniká
 A teljes fejlesztési ütemterv a `ROADMAP.txt` fájlban található.
 
 ## 📞 Kapcsolat
-* **Alapító:** Veres Barnabás
+* **Alapító:** Veres Barnabás.
