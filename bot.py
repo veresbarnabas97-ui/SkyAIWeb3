@@ -4,11 +4,8 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Callb
 from telegram.error import BadRequest
 
 # --- KONFIGURÁCIÓ ---
-# A Te Bot Tokened (ellenőrizd, hogy ez a legfrissebb!)
 TOKEN = "8501071283:AAHAmAsZ2r1NBUSQsCI-grq4Bmrek3Cbrts"
-# A Te Telegram ID-d (hogy csak te kapj admin értesítést)
 ADMIN_ID = 1979330363 
-# A GitHub Pages linked (az App gomb ide fog vinni)
 WEB_APP_URL = "https://veresbarnabas97-ui.github.io/SkyAIWeb3" 
 SUPPORT_CONTACT = "https://t.me/VeresBarnabas1"
 
@@ -16,27 +13,23 @@ SUPPORT_CONTACT = "https://t.me/VeresBarnabas1"
 BINANCE_PAY_URL = "https://s.binance.com/FcZ8aA7w" 
 REVOLUT_PAY_URL = "https://revolut.me/veresbarnabas1"
 
-# Naplózás beállítása
+# Naplózás
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Ez a függvény fut le a /start parancsra, vagy ha a weboldalról
-    érkezik egy kifizetési kérelem (deep link).
-    """
+    """Főmenü és Deep Link kezelés"""
     user = update.effective_user
     args = context.args
 
-    # 1. KIFIZETÉS KEZELÉSE (Web -> Bot Deep Link)
-    # Ha a linkben van paraméter (pl. t.me/bot?start=withdraw_...), akkor ez fut le.
-    if args and args[0].startswith('withdraw_'):
+    # 1. Kifizetési kérelem kezelése (csak ha üzenetből jön)
+    if update.message and args and args[0].startswith('withdraw_'):
         await handle_withdrawal_request(update, context, args[0])
         return
 
-    # 2. ALAP FŐMENÜ (Normál indítás)
+    # 2. Főmenü szövege
     welcome_text = (
         f"🌌 **SkyAI Ecosystem v3.8**\n\n"
         f"Üdvözöllek a fedélzeten, {user.first_name}!\n"
@@ -47,30 +40,37 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔻 **Válassz opciót:**"
     )
 
-    # Gombok létrehozása
     keyboard = [
         [InlineKeyboardButton("💎 VIP Vásárlás ($15)", callback_data='buy_vip')],
         [InlineKeyboardButton("🚀 APP MEGNYITÁSA", web_app=WebAppInfo(url=WEB_APP_URL))],
         [InlineKeyboardButton("👤 Ügyfélszolgálat", url=SUPPORT_CONTACT)]
     ]
     
-    await update.message.reply_text(
-        text=welcome_text,
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
-    )
+    # HIBAJAVÍTÁS: Külön kezeljük a gombnyomást és a szöveges parancsot
+    if update.message:
+        # Ha /start parancsot írtál
+        await update.message.reply_text(
+            text=welcome_text,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode='Markdown'
+        )
+    elif update.callback_query:
+        # Ha a "Vissza" gombot nyomtad meg (szerkesztjük az előző üzenetet)
+        await update.callback_query.message.edit_text(
+            text=welcome_text,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode='Markdown'
+        )
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gombnyomások kezelése"""
     query = update.callback_query
     
-    # Hibakezelés: Ha a gomb már "lejárt" (régi üzenet), ne omoljon össze a bot
     try:
         await query.answer()
     except BadRequest:
         pass
 
-    # --- VIP VÁSÁRLÁS MENÜ ---
     if query.data == 'buy_vip':
         text = (
             "💎 **SkyAI VIP Access Vásárlás**\n\n"
@@ -89,7 +89,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
-    # --- HOZZÁFÉRÉS MEGADÁSA ---
     elif query.data == 'grant_access':
         text = (
             "🎉 **Köszönjük a bizalmat!**\n\n"
@@ -100,18 +99,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [[InlineKeyboardButton("🚀 BELÉPÉS A RENDSZERBE", web_app=WebAppInfo(url=WEB_APP_URL))]]
         await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
-    # --- VISSZA A FŐMENÜBE ---
     elif query.data == 'back_home':
         await start(update, context)
 
-    # --- ADMIN KIFIZETÉS JÓVÁHAGYÁS / ELUTASÍTÁS ---
+    # --- ADMIN MŰVELETEK ---
     elif query.data.startswith('approve_') or query.data.startswith('deny_'):
-        # Csak TE (az Admin) nyomhatod meg ezeket a gombokat
         if update.effective_user.id != ADMIN_ID:
             await query.answer("⛔ Nincs admin jogosultságod!", show_alert=True)
             return
 
-        # Adatok kinyerése a gombból (action_netAmount_currency_address)
         parts = query.data.split('_')
         if len(parts) < 4: return
 
@@ -121,19 +117,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         address = parts[3]
         
         if action == 'approve':
-            # Üzenet az Adminnak a teendőkről
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
                 text=(
                     f"✅ **KIFIZETÉS JÓVÁHAGYVA!**\n\n"
-                    f"⚠️ **Admin teendő:** Hajtsd végre a tranzakciót manuálisan a tárcádból.\n\n"
+                    f"⚠️ **Admin teendő:** Hajtsd végre a tranzakciót manuálisan.\n\n"
                     f"💸 Utalandó: **{net_amount} {currency}**\n"
                     f"📬 Cím: `{address}`\n\n"
                     f"_(A 15% levonva, a felhasználó értesítve a rendszerben.)_"
                 ),
                 parse_mode='Markdown'
             )
-            # Gombok eltüntetése
             try: await query.edit_message_reply_markup(reply_markup=None)
             except BadRequest: pass 
             
@@ -147,57 +141,40 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except BadRequest: pass
 
 async def handle_withdrawal_request(update: Update, context: ContextTypes.DEFAULT_TYPE, payload: str):
-    """
-    Ez a függvény dolgozza fel a weboldalról érkező kifizetési kérelmet.
-    Kiszámolja a 15%-ot és értesítést küld neked (Admin).
-    """
+    """Kifizetési kérelem feldolgozása"""
     try:
         parts = payload.split('_')
-        if len(parts) < 4:
-            await update.message.reply_text("⚠️ Hibás kérelem formátum.")
-            return
+        if len(parts) < 4: return
 
-        gross_amount_str = parts[1]
+        gross = float(parts[1])
         address = parts[2]
         currency = parts[3]
         
-        gross_amount = float(gross_amount_str)
-
-        # 15% SIKERDÍJ LEVONÁSA (A matek itt történik)
-        fee = gross_amount * 0.15
-        net_amount = gross_amount * 0.85
+        fee = gross * 0.15
+        net = gross * 0.85
         
-        # Formázás 4 tizedesjegyre
-        net_str = f"{net_amount:.4f}"
-        fee_str = f"{fee:.4f}"
-
-        # 1. USER ÉRTESÍTÉSE (Aki kérte)
+        # Usernek
         await update.message.reply_text(
             f"🏦 **SkyAI Kifizetési Kérelem Fogadva**\n\n"
-            f"A rendszerünk feldolgozás alatt tartja az igényedet.\n\n"
-            f"📥 Visszakért tőke: {gross_amount_str} {currency}\n"
-            f"📉 SkyAI Díj (15%): {fee_str} {currency}\n"
-            f"✅ **Várható jóváírás: {net_str} {currency}**\n\n"
+            f"📥 Visszakért: {gross} {currency}\n"
+            f"📉 Díj (15%): {fee:.4f} {currency}\n"
+            f"✅ **Kifizetendő: {net:.4f} {currency}**\n\n"
             f"⏳ Státusz: **Jóváhagyásra vár...**"
         )
 
-        # 2. ADMIN ÉRTESÍTÉSE (Te kapod meg)
+        # Adminnak (NEKED)
         if ADMIN_ID != 0:
             admin_text = (
                 f"🚨 **PÉNZÜGYI TRANZAKCIÓ IGÉNY**\n\n"
-                f"👤 Felhasználó: {update.effective_user.first_name} (@{update.effective_user.username})\n"
-                f"💰 Bruttó tőke: {gross_amount_str} {currency}\n"
-                f"✂️ 15% Rész (Nálad marad): **{fee_str} {currency}**\n"
-                f"💸 **Kifizetendő (Netto): {net_str} {currency}**\n"
+                f"👤 Felhasználó: {update.effective_user.first_name}\n"
+                f"💰 Bruttó: {gross} {currency}\n"
+                f"💸 **Netto (Utalandó): {net:.4f} {currency}**\n"
                 f"🏦 Cím: `{address}`"
             )
             
-            # Gombok az Adminnak
             keyboard = [
-                [
-                    InlineKeyboardButton("✅ UTALÁS ENGEDÉLYEZÉSE", callback_data=f"approve_{net_str}_{currency}_{address}"),
-                    InlineKeyboardButton("❌ ELUTASÍTÁS", callback_data=f"deny_{net_str}_{currency}_{address}")
-                ]
+                [InlineKeyboardButton("✅ ENGEDÉLYEZÉS", callback_data=f"approve_{net:.4f}_{currency}_{address}")],
+                [InlineKeyboardButton("❌ ELUTASÍTÁS", callback_data=f"deny_{net:.4f}_{currency}_{address}")]
             ]
             
             await context.bot.send_message(
@@ -209,15 +186,10 @@ async def handle_withdrawal_request(update: Update, context: ContextTypes.DEFAUL
 
     except Exception as e:
         logging.error(f"Error: {e}")
-        await update.message.reply_text("⚠️ Hiba történt a kérelem feldolgozásakor.")
 
 if __name__ == '__main__':
-    # Bot indítása
     application = ApplicationBuilder().token(TOKEN).build()
-    
-    # Parancsok hozzáadása
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CallbackQueryHandler(button_handler))
-    
     print("SkyAI Ecosystem Bot Online... (Nyomj Ctrl+C-t a leállításhoz)")
     application.run_polling()
